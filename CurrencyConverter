@@ -1,0 +1,60 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+import org.json.JSONObject;
+
+public class CurrencyConverter {
+
+    // Replace with your actual API key from https://www.exchangerate-api.com/
+    static final String API_KEY = "YOUR_API_KEY_HERE";
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // 1. Currency Selection
+        System.out.print("Enter base currency (e.g., USD): ");
+        String baseCurrency = scanner.nextLine().toUpperCase();
+
+        System.out.print("Enter target currency (e.g., INR): ");
+        String targetCurrency = scanner.nextLine().toUpperCase();
+
+        // 2. Amount Input
+        System.out.print("Enter amount to convert: ");
+        double amount = scanner.nextDouble();
+
+        try {
+            // 3. Fetch exchange rates from API
+            String urlStr = "https://v6.exchangerate-api.com/v6/" + API_KEY + "/latest/" + baseCurrency;
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder responseStrBuilder = new StringBuilder();
+            String inputStr;
+
+            while ((inputStr = in.readLine()) != null)
+                responseStrBuilder.append(inputStr);
+            in.close();
+
+            // 4. Currency Conversion
+            JSONObject jsonObject = new JSONObject(responseStrBuilder.toString());
+            if (jsonObject.getString("result").equals("success")) {
+                double rate = jsonObject.getJSONObject("conversion_rates").getDouble(targetCurrency);
+                double convertedAmount = amount * rate;
+
+                // 5. Display Result
+                System.out.printf("Converted amount: %.2f %s\n", convertedAmount, targetCurrency);
+            } else {
+                System.out.println("Error fetching conversion rates.");
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
+        scanner.close();
+    }
+}
